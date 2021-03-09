@@ -34,12 +34,21 @@ class CategoriesViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
+    
+    categories.asObservable()
+        .observeOn(MainScheduler.instance)
+        .subscribe(onNext: { [weak self] _ in
+            self?.tableView.reloadData()
+        })
+        .disposed(by: disposeBag)
+    
     startDownload()
   }
 
   func startDownload() {
-    
+    let eoCategories = EONET.categories
+    eoCategories.bind(to: categories)
+        .disposed(by: disposeBag)
   }
 }
 
@@ -51,6 +60,10 @@ extension CategoriesViewController: UITableViewDataSource {
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell")!
+    
+    let category = categories.value[indexPath.row]
+    cell.textLabel?.text = "\(category.name) \(category.events.count) "
+    cell.accessoryType = category.events.count > 0 ? .disclosureIndicator: .none
     return cell
   }
 }

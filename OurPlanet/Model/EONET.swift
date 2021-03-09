@@ -31,6 +31,18 @@ class EONET {
   static let categoriesEndpoint = "/categories"
   static let eventsEndpoint = "/events"
 
+  static var categories: Observable<[EOCategory]> {
+    EONET.request(endpoint: categoriesEndpoint)
+        .map { data in
+            let categories  = data["categories"] as? [[String:Any]] ?? []
+            return categories
+                .flatMap(EOCategory.init)
+                .sorted { $0.name < $1.name }
+        }
+        .catchErrorJustReturn([])
+        .share(replay: 1, scope: .forever)
+  }
+    
   static var ISODateReader: DateFormatter = {
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
